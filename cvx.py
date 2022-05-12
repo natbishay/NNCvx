@@ -3,47 +3,68 @@
 # Initial tests will be on this super cute data set
 import numpy as np
 import cvxpy as cp
+from math import isclose
 
-n = 5
-d = 1
-# X = np.array([-2, -1, 0, 1, 2])
-y = np.array([1, -1, 1, 1, -1])
-beta = 0
+n = 10
+d = 3
+X = np.random.randn(n,d-1)
+X = np.append(X,np.ones((n,1)), axis=1)
+y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
 
-X = np.random.rand(n,d)
-mean = np.zeros(d)
-cov = np.identity(d)
-iteration_len = 10
-u = np.random.multivariate_normal(mean,cov,iteration_len)
-D = []
-for i in range(iteration_len):
-    D.append(np.diag(np.int64(X @ u[i,:] > 0)))
+beta = 1e-4
 
-v = cp.Variable((iteration_len, d))
-w = cp.Variable((iteration_len, d))
+def relu(x):
+    return np.maximum(0,x)
+def drelu(x):
+    return x>=0
+
+D=np.empty((n,0))
+
+## Finite approximation of all possible sign patterns
+for i in range(int(1e2)):
+    u=np.random.randn(d,1)
+    D=np.append(D,drelu(np.dot(X,u)),axis=1)
+
+D=(np.unique(D,axis=1))
+m = D.shape[1]
+
+v = cp.Variable((d, m)) # 3 by 36
+w = cp.Variable((d, m))
 
 obj_a = 0
 obj_b = 0
 
 constraints = []
 
-for i in range(iteration_len):
-    obj_a += D[i]@X@(v[i,:]- w[i,:]) - y
-    obj_b += cp.norm(v[i,:]) + cp.norm(w[i,:])
-    constraints += [(2*D[i] - np.eye(n))@X@v[i,:] >= 0]
-    constraints += [(2*D[i] - np.eye(n))@X@w[i,:] >= 0]
 
-obj_a = 0.5*cp.norm(obj_a)**2
-obj_b = beta*obj_b
-obj_val = cp.Minimize(obj_a + obj_b)
+obj_a = cp.sum(cp.multiply(D , (X@(v - w))), axis=1)
+cost=cp.sum(cp.pos(1-cp.multiply(y,obj_a)))/n+beta*(cp.mixed_norm(v.T,2,1)+cp.mixed_norm(w.T,2,1))
+
+
+constraints += [cp.multiply(2*D - np.ones((n,m)), (X@v)) >= 0]
+constraints += [cp.multiply(2*D - np.ones((n,m)), (X@w)) >= 0]
+
+obj_val = cp.Minimize(cost)
 
 prob = cp.Problem(obj_val, constraints)
 prob.solve()
 
-print(prob.value/iteration_len)
+print(prob.value)
 
+# uj is 1x3
 
+u = np.zeros((d,m))
+alpha = np.zeros((m))
 
-
-
-
+for i in range(m):
+    norm_vi = np.linalg.norm(v.value[:,i])
+    norm_wi = np.linalg.norm(w.value[:,i])
+    if isclose(norm_vi,0,abs_tol=1e-4):
+        if isclose(norm_wi,0,abs_tol=1e-4):
+            u[:,i] = 0
+        else:
+            u[:,i] = w.value[:,i]/np.sqrt(norm_wi)
+            alpha[i] = np.sqrt(norm_wi)
+    else:
+         u[:,i] = v.value[:,i]/np.sqrt(norm_vi)
+         alpha[i] = np.sqrt(norm_vi)
