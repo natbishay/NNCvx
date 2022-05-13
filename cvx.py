@@ -19,12 +19,13 @@ y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
 # y = np.array([1, -1, 1, 1, -1]).reshape(n,d)
 
 beta = 1e-4
-betas = [np.exp(j-10) for j in range(10)]
+betas = [10**(j-10) for j in range(10)]
 
 def drelu(x):
     return x>=0
 
 losses = []
+num_hidden_neurons = []
 
 for beta in betas:
     D=np.empty((n,0))
@@ -60,23 +61,31 @@ for beta in betas:
     # print(v.value)
     # print(w.value)
 
-plt.semilogy(betas,losses)
-plt.savefig('betas.jpg')
+    u = np.zeros((d,m))
+    alpha = np.zeros((m))
 
-u = np.zeros((d,m))
-alpha = np.zeros((m))
-
-for i in range(m):
-    norm_vi = np.linalg.norm(v.value[:,i])
-    norm_wi = np.linalg.norm(w.value[:,i])
-    if isclose(norm_vi,0,abs_tol=1e-4):
-        if isclose(norm_wi,0,abs_tol=1e-4):
-            u[:,i] = 0
+    for i in range(m):
+        norm_vi = np.linalg.norm(v.value[:,i])
+        norm_wi = np.linalg.norm(w.value[:,i])
+        if isclose(norm_vi,0,abs_tol=1e-4):
+            if isclose(norm_wi,0,abs_tol=1e-4):
+                u[:,i] = 0
+            else:
+                u[:,i] = w.value[:,i]/np.sqrt(norm_wi)
+                alpha[i] = np.sqrt(norm_wi)
         else:
-            u[:,i] = w.value[:,i]/np.sqrt(norm_wi)
-            alpha[i] = np.sqrt(norm_wi)
-    else:
-        u[:,i] = v.value[:,i]/np.sqrt(norm_vi)
-        alpha[i] = np.sqrt(norm_vi)
-print(alpha)
-print(np.nonzero(alpha))
+            u[:,i] = v.value[:,i]/np.sqrt(norm_vi)
+            alpha[i] = np.sqrt(norm_vi)
+
+    num_hidden_neurons.append(np.nonzero(alpha)[0].shape[0])
+
+plt.semilogy(betas,losses)
+plt.savefig('losses.jpg')
+
+plt.figure()
+plt.semilogx(betas, num_hidden_neurons)
+plt.xlabel('Beta value')
+plt.ylabel('Number of hidden neurons')
+plt.savefig('numhidden.jpg')
+
+
