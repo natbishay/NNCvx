@@ -7,8 +7,8 @@ from math import isclose
 import matplotlib.pyplot as plt
 
 np.random.seed(10)
-n = 10
-d = 3
+n = 10 # number of data
+d = 3 # dimension of individual data
 X = np.random.randn(n,d-1)
 X = np.append(X,np.ones((n,1)), axis=1)
 y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
@@ -20,6 +20,7 @@ y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
 
 beta = 1e-4
 betas = [10**(j-10) for j in range(10)]
+#betas = betas[0]
 
 def drelu(x):
     return x>=0
@@ -87,5 +88,4 @@ plt.semilogx(betas, num_hidden_neurons)
 plt.xlabel('Beta value')
 plt.ylabel('Number of hidden neurons')
 plt.savefig('numhidden.jpg')
-
 

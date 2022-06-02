@@ -1,17 +1,9 @@
 import torch
 from torch import nn
-#from torch import optim
 import torch.nn.utils.prune as prune
-#import torch.nn.functional as F
-#from collections import abc as container_abcs
-#from torchvision import datasets, transforms
 import numpy as np
 import torch.utils as utils
 import matplotlib.pyplot as plt
-#import scipy.special as spc
-#import random
-
-# from torch._six import container_abcs
 
 def my_loss(output, target, model, beta):
     
@@ -38,7 +30,7 @@ class FooBarPruningMethod(prune.BasePruningMethod):
 
     def compute_mask(self, t, default_mask):
         mask = default_mask.clone()
-      #  mask.view(-1)[::2] = 0
+
         if mask.size()[0] > mask.size()[1]:
             mask.view(mask.size())[0:9,:] = 0
             mask.view(mask.size())[11:28,:] = 0
@@ -48,12 +40,19 @@ class FooBarPruningMethod(prune.BasePruningMethod):
             mask.view(mask.size())[:,11:28] = 0
             mask.view(mask.size())[:,30:37] = 0
         return mask
-
+    
+######################################################
+# CHANGE THIS TO MATCH CVX.PY, AND NO_PRUNING.PY
+#############################################
 beta = 1e-4
-np.random.seed(10)
-n = 10
+n = 10 # set of training data
 d = 3 # dimension of input
 m = 39 # number of hidder nodes
+epochs = 5000
+n_hidden_v = np.array([m, 5, 10, 20, 100]) # different number of hidden layers
+lr=0.005 
+####################################################
+np.random.seed(10)
 X = np.random.randn(n,d-1)
 X = np.append(X,np.ones((n,1)), axis=1)
 y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
@@ -65,10 +64,10 @@ dataset = utils.data.TensorDataset(train_x, train_y)
 dataloader = utils.data.DataLoader(dataset)
 
 n_input = d
-n_hidden_v = np.array([m, 5, 10, 20, 100])
 
-n_output = d
-epochs = 5000
+
+n_output = 1
+
 
 loss_at_epoch = np.zeros((epochs, len(n_hidden_v)))
 
@@ -80,7 +79,7 @@ for n_hidden in n_hidden_v:
 
 
     # Optimizers require the parameters to optimize and a learning rate
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.005)
+    optimizer = torch.optim.SGD(model.parameters(), lr)
     
     
     for e in range(epochs):
@@ -89,24 +88,13 @@ for n_hidden in n_hidden_v:
         
         for train_x, train_y in dataloader:
             train_x = train_x.view(train_x.shape[0], -1)
+            
+            #############################################################
+            # YOU CAN CHANGE THE AMOUNT OR DELETE A LAYER
+            #############################################################
             prune.random_unstructured(model[0], name="weight", amount=0.3)
             prune.random_unstructured(model[2], name="weight", amount=0.3)
-            
-            # permanent pruning
-     #       prune.remove(model[0], 'weight')
-     #       prune.remove(model[2], 'weight')
- #           print(list(model[0].named_parameters()))
-            
-           # prune.remove(model[2], 'weight')
-           # print(list(model[2].named_parameters()))
-            
-         #   prune the three smallest bias entries 
-          #  prune.l1_unstructured(model[0], name="bias", amount=3)
-          #  print(model[0].bias)
-           # print(list(model[0].named_buffers()))
-#            print(model[0].weight)
-#            print(model[2].weight)
-          #  foobar_unstructured(model, name='weight')
+            #############################################################
             optimizer.zero_grad()
             output = model(train_x)
             loss = my_loss(output, train_y, model, beta)
@@ -127,7 +115,7 @@ plt.yscale('log')
 plt.legend()
 plt.xlabel("num epochs")
 plt.ylabel("MSE Loss 30% Pruning")
-print(loss_at_epoch[4999])
+print(loss_at_epoch[epochs-1])
 # https://towardsdatascience.com/training-a-neural-network-using-pytorch-72ab708da210
 #https://stackoverflow.com/questions/57949625/with-pytorch-dataloader-how-to-take-in-two-ndarray-data-label
 

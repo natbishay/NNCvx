@@ -22,8 +22,8 @@ global y
 ####################################################
 # THE PARAMETERS SHOULD MATCH THE PREVIOUS CASES
 ##################################################
-epochs = 5000
-n = 10
+epochs = 100
+n = 10 
 d = 3 # dimension of input
 lr=0.005
 betas = [10**(j-10) for j in range(10)] # YOU CAN ALSO CHANGE THE BETAS
@@ -119,9 +119,15 @@ for betai in betas:
     n_input = d
     n_hidden = m
     n_output = 1
-    model = nn.Sequential(nn.Linear(n_input, n_hidden),
-                          nn.ReLU(),
-                          nn.Linear(n_hidden, n_output))
+    model = nn.Sequential(
+        nn.Linear(n_input, n_hidden),
+        nn.ReLU(),
+        nn.Linear(n_hidden, n_hidden),
+        nn.ReLU(),
+        nn.Linear(n_hidden, n_output),
+        
+    )
+
 
 
     # Optimizers require the parameters to optimize and a learning rate
@@ -138,10 +144,12 @@ for betai in betas:
             # apply masking to the model
             foobar_unstructured(model[0], name='weight')
             foobar_unstructured(model[2], name='weight')
+            foobar_unstructured(model[4], name='weight')
             
             # permanent pruning
             prune.remove(model[0], 'weight')
             prune.remove(model[2], 'weight')
+            prune.remove(model[4], 'weight')
         #    print(model[0].weight)
           #  print(model[2].weight)
             optimizer.zero_grad()
@@ -165,6 +173,14 @@ plt.legend()
 plt.xlabel("num epochs")
 plt.ylabel("MSE Loss Pruning")
 print(loss_at_epoch[epochs-1])
+
+
+plt.figure()
+plt.plot(betas,loss_at_epoch[:, -1])
+plt.semilogx()
+plt.semilogy()
+plt.xlabel("beta")
+plt.ylabel("MSE final Loss Pruning")
 # https://towardsdatascience.com/training-a-neural-network-using-pytorch-72ab708da210
 #https://stackoverflow.com/questions/57949625/with-pytorch-dataloader-how-to-take-in-two-ndarray-data-label
 

@@ -40,12 +40,21 @@ class FooBarPruningMethod(prune.BasePruningMethod):
             mask.view(mask.size())[:,11:28] = 0
             mask.view(mask.size())[:,30:37] = 0
         return mask
-
-beta = 1e-4
 np.random.seed(10)
-n = 10
+
+
+###########################################
+#YOU CAN CHANGE THIS!!!
+#############################################
+beta = 1e-4
+n = 10 # set of training data
 d = 3 # dimension of input
 m = 39 # number of hidder nodes
+epochs = 5000
+n_hidden_v = np.array([m, 5, 10, 20, 100])# very the number of layers
+lr=0.005 # learning rate
+##############################################
+
 X = np.random.randn(n,d-1)
 X = np.append(X,np.ones((n,1)), axis=1)
 y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
@@ -57,10 +66,8 @@ dataset = utils.data.TensorDataset(train_x, train_y)
 dataloader = utils.data.DataLoader(dataset)
 
 n_input = d
-n_hidden_v = np.array([m, 5, 10, 20, 100])
+n_output = 1
 
-n_output = d
-epochs = 5000
 
 loss_at_epoch = np.zeros((epochs, len(n_hidden_v)))
 
@@ -72,7 +79,7 @@ for n_hidden in n_hidden_v:
 
 
     # Optimizers require the parameters to optimize and a learning rate
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.005)
+    optimizer = torch.optim.SGD(model.parameters(), lr)
     
     
     for e in range(epochs):
@@ -101,7 +108,7 @@ plt.yscale('log')
 plt.legend()
 plt.xlabel("num epochs")
 plt.ylabel("MSE Loss")
-print(loss_at_epoch[4999])
+print(loss_at_epoch[epochs-1])
 # https://towardsdatascience.com/training-a-neural-network-using-pytorch-72ab708da210
 #https://stackoverflow.com/questions/57949625/with-pytorch-dataloader-how-to-take-in-two-ndarray-data-label
 
