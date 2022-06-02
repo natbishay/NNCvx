@@ -28,7 +28,7 @@ global y
 epochs = 100
 n = 10
 d = 3 # dimension of input
-lr=0.005
+lr=0.05
 betas = [10**(j-10) for j in range(10)] # YOU CAN ALSO CHANGE THE BETAS
 ################################################
 np.random.seed(10)

@@ -50,14 +50,15 @@ beta = 1e-4
 n = 10 # set of training data
 d = 3 # dimension of input
 m = 39 # number of hidder nodes
-epochs = 5000
-n_hidden_v = np.array([m, 5, 10, 20, 100])# very the number of layers
-lr=0.005 # learning rate
+epochs = 2000
+n_hidden_v = np.array([m, 5, 6, 10, 20])# very the number of layers
+lr=0.05 # learning rate
 ##############################################
 
 X = np.random.randn(n,d-1)
 X = np.append(X,np.ones((n,1)), axis=1)
-y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
+y =((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
+
 
 train_x = torch.Tensor(X) 
 train_y = torch.Tensor(y)

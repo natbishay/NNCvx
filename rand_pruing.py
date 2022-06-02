@@ -48,9 +48,9 @@ beta = 1e-4
 n = 10 # set of training data
 d = 3 # dimension of input
 m = 39 # number of hidder nodes
-epochs = 5000
-n_hidden_v = np.array([m, 5, 10, 20, 100]) # different number of hidden layers
-lr=0.005 
+epochs = 2000
+n_hidden_v = np.array([m, 5, 6, 10, 20]) # different number of hidden layers
+lr=0.05 
 ####################################################
 np.random.seed(10)
 X = np.random.randn(n,d-1)

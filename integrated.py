@@ -22,11 +22,12 @@ global y
 ####################################################
 # THE PARAMETERS SHOULD MATCH THE PREVIOUS CASES
 ##################################################
-epochs = 5000
+epochs = 2000
 n = 10
 d = 3 # dimension of input
-lr=0.005
+lr=0.05
 betas = [10**(j-10) for j in range(10)] # YOU CAN ALSO CHANGE THE BETAS
+
 ################################################
 np.random.seed(10)
 X = np.append(np.random.randn(n,d-1),np.ones((n,1)), axis=1)
@@ -157,7 +158,7 @@ for betai in betas:
 
 #plotting
 plt.figure()
-for i in range(iter_ind):
+for i in range(iter_ind-2):
     plt.plot(range(epochs), loss_at_epoch[:, i], label = "beta = " + str(betas[i]))
 
 plt.yscale('log')

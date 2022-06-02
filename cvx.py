@@ -20,6 +20,7 @@ y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
 
 beta = 1e-4
 betas = [10**(j-10) for j in range(10)]
+betas = [1e-4]
 #betas = betas[0]
 
 def drelu(x):
