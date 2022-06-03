@@ -12,6 +12,9 @@ d = 3
 X = np.random.randn(n,d-1)
 X = np.append(X,np.ones((n,1)), axis=1)
 y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
+print(y.shape)
+# initialize random NN, put 5 neurons, plant NN
+# feed data to NN and take ouput as NN
 
 # n=5
 # d=1
@@ -78,6 +81,8 @@ for beta in betas:
             alpha[i] = np.sqrt(norm_vi)
 
     num_hidden_neurons.append(np.nonzero(alpha)[0].shape[0])
+    if beta == 1e-4:
+        print(np.nonzero(alpha)[0].shape[0])
 
 plt.semilogy(betas,losses)
 plt.savefig('losses.jpg')
