@@ -15,7 +15,7 @@ X = np.append(X,np.ones((n,1)), axis=1)
 y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
 
 betas = [10**(j-10) for j in range(10)] # YOU CAN ALSO CHANGE THE BETAS
-betas = betas[0:7]
+
 
 
 beta_opt = 1e-4
@@ -75,8 +75,12 @@ for betai in betas:
 plt.semilogy(betas,losses)
 plt.savefig('losses.jpg')
 
+
+
 plt.figure()
-plt.semilogx(betas, losses)
+plt.plot(betas, losses)
+plt.semilogx()
+plt.semilogy()
 plt.xlabel('Beta value')
 plt.ylabel('Loss value')
 plt.savefig('numhidden.jpg')
