@@ -16,7 +16,6 @@ y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
 
 beta_opt = 1e-4
 betas = [10**(j-10) for j in range(10)]
-betas = [1e-4]
 #betas = betas[0]
 
 def drelu(x):
@@ -77,13 +76,13 @@ losses.append(prob.value)
 
 # take the output of the optimization as input of NN
 
-X = np.maximum(np.multiply(D , (X@(v.value - w.value))),0)
-epochs = 10
+X = np.multiply(D , (X@(v.value - w.value))) 
+epochs = 5000
 n , d = np.shape(X)
 lr=0.05
 betas = [10**(j-10) for j in range(10)] # YOU CAN ALSO CHANGE THE BETAS
 #y=((np.linalg.norm(X[:,0:d-1],axis=1)>1)-0.5)*2
-
+#betas = [1e-9, 1e-8, 1e-7, 1e-4]
 iter_ind = 0
 loss_at_epoch = np.zeros((epochs, len(betas)))
 for betai in betas:
@@ -157,77 +156,95 @@ for betai in betas:
     
     
     
-    
     global alpha
     alpha = alpha_finder()
-    m = np.size(alpha)# number of hidder nodes
+    m = np.size(alpha) # number of hidder nodes
+    zeros = len(np.where(alpha == 0)[0]) # number of nonzeros
     train_x = torch.Tensor(X) 
     train_y = torch.Tensor(y)
 
     dataset = utils.data.TensorDataset(train_x, train_y)
     dataloader = utils.data.DataLoader(dataset)
     n_input = d
-    n_hidden = m
+    n_hidden = [m, 5, 10, 20, 100]
+    loss_at_epoch_nodes = np.zeros((epochs, len(n_hidden)))
     n_output = 1
-    model = nn.Sequential(
-        nn.Linear(n_input, n_hidden),
-        nn.ReLU(),
-        nn.Linear(n_hidden, n_output),
+    # model = nn.Sequential(
+    #     nn.Linear(n_input, n_hidden),
+    #     nn.ReLU(),
+    #     nn.Linear(n_hidden, n_output),
 
         
-    )
+    # )
 
 
 
     # Optimizers require the parameters to optimize and a learning rate
-    optimizer = torch.optim.SGD(model.parameters(), lr)
     
-    
-    for e in range(epochs):
-        
-        running_loss = 0
-        
-        for train_x, train_y in dataloader:
-            train_x = train_x.view(train_x.shape[0], -1)
-            
-            # apply masking to the model
-            foobar_unstructured(model[0], name='weight')
-            foobar_unstructured(model[2], name='weight')
-            #foobar_unstructured(model[4], name='weight')
-            
-            # permanent pruning
-            prune.remove(model[0], 'weight')
-            prune.remove(model[2], 'weight')
-            #prune.remove(model[4], 'weight')
-        # #    print(model[0].weight)
-          #  print(model[2].weight)
-            optimizer.zero_grad()
-            output = model(train_x)
-            loss = my_loss(output, train_y, model, beta)
-            loss.backward()
-            optimizer.step()
-            running_loss += loss.item()
-        else:
+    for num_i, num_hid in enumerate(n_hidden):
 
-            loss_at_epoch[e, iter_ind] = running_loss/len(dataloader)
-    iter_ind = iter_ind + 1   
+
+        model = nn.Sequential(
+        nn.Linear(n_input, num_hid),
+        nn.ReLU(),
+        nn.Linear(num_hid, n_output),
+        )
+        optimizer = torch.optim.SGD(model.parameters(), lr)
+
+        
+    
+        for e in range(epochs):
+            
+            running_loss = 0
+            
+            for train_x, train_y in dataloader:
+                train_x = train_x.view(train_x.shape[0], -1)
+                
+                # apply masking to the model, for the m case
+                if num_i == 0: # first one, which is the one we want to mask
+                    foobar_unstructured(model[0], name='weight')
+                    foobar_unstructured(model[2], name='weight')
+                    #foobar_unstructured(model[4], name='weight')
+                    
+                    # permanent pruning
+                    prune.remove(model[0], 'weight')
+                    prune.remove(model[2], 'weight')
+                #prune.remove(model[4], 'weight')
+            # #    print(model[0].weight)
+            #  print(model[2].weight)
+                optimizer.zero_grad()
+                output = model(train_x)
+                loss = my_loss(output, train_y, model, beta)
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item()
+            else:
+                loss_at_epoch_nodes[e, num_i] = running_loss/len(dataloader)
+                #loss_at_epoch[e, iter_ind] = running_loss/len(dataloader)
+        iter_ind = iter_ind + 1   
 
 #plotting
-plt.figure()
-for i in range(iter_ind):
-    plt.plot(range(epochs), loss_at_epoch[:, i], label = "beta = " + str(betas[i]))
+    plt.figure()
+    for i in range(len(n_hidden)):
+        #plt.plot(range(epochs), loss_at_epoch[:, i], label = "beta = " + str(betas[i]))
+        if i == 0:
+            plt.plot(loss_at_epoch_nodes[:,i], label="NH = "+str(n_hidden[i]) + ", not pruned = "+str(n_hidden[i]-zeros))
+            continue
+        plt.plot(loss_at_epoch_nodes[:,i], label="Num hidden = "+str(n_hidden[i]))
 
-plt.yscale('log')
-plt.legend()
-plt.xlabel("num epochs")
-plt.ylabel("MSE Loss Pruning")
-print(loss_at_epoch[epochs-1])
+    plt.yscale('log')
+    plt.legend()
+    plt.xlabel("num epochs")
+    plt.ylabel("MSE Loss Pruning")
+    plt.title("Beta value: "+str(beta))
+    print(loss_at_epoch_nodes[epochs-1])
+    plt.savefig("final_nodes_m_pruned_"+str(beta)+".png")
 
 
 plt.figure()
 plt.plot(betas,loss_at_epoch[-1, :])
-plt.semilogx()
-plt.semilogy()
+#plt.semilogx()
+#plt.semilogy()
 plt.xlabel("beta")
 plt.ylabel("MSE final Loss Pruning")
 # https://towardsdatascience.com/training-a-neural-network-using-pytorch-72ab708da210

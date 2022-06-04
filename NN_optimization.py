@@ -25,7 +25,7 @@ global y
 ####################################################
 # THE PARAMETERS SHOULD MATCH THE PREVIOUS CASES
 ##################################################
-epochs = 100
+epochs = 5000
 n = 10
 d = 3 # dimension of input
 lr=0.05
@@ -226,6 +226,7 @@ plt.semilogx()
 plt.semilogy()
 plt.xlabel("beta")
 plt.ylabel("MSE final Loss Pruning")
+plt.savefig("NN_Opt_5000")
 #for i in range(iter_ind):
 #    plt.plot(range(epochs), losses_opt[:, i], label = "beta = " + str(betas[i]))
 
